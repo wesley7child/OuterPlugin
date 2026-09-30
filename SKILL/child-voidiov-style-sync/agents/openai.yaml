@@ -1,0 +1,4 @@
+interface:
+  display_name: "Child VOIDIOV Style Sync"
+  short_description: "Sync VOIDIOV frontend style tokens"
+  default_prompt: "Use $child-voidiov-style-sync when changing or reconciling DCF, VOH, or VOTS frontend styles with the VOIDIOV shared styler."

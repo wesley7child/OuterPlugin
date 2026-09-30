@@ -1,0 +1,4 @@
+interface:
+  display_name: "Child Quarto Book Sync"
+  short_description: "Review Obsidian chapters against Quarto Book config"
+  default_prompt: "Use $child-quarto-book-sync to review my Obsidian-written Quarto book and report unsynced chapters."

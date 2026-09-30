@@ -1,0 +1,4 @@
+interface:
+  display_name: "child-Git Version Submit"
+  short_description: "Versioned Git commit and push workflow"
+  default_prompt: "Use $child-git-version-submit to commit and push the current project with an incremented version title."

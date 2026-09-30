@@ -1,0 +1,24 @@
+/* 自动抢红包面板样式 */
+.redpacket__panel {
+    width: 100%;
+    display: none; /* 默认隐藏 */
+    margin-top: 4px;
+}
+
+/* 标题样式 */
+#redpacket__title {
+    cursor: pointer;
+    user-select: none;
+    color: royalblue;
+}
+
+/* 输入框样式 */
+#redpacket__delay,
+#redpacket__cd {
+    width: 35px;
+}
+
+/* 选项间距 */
+.redpacket__option {
+    margin-top: 5px;
+}

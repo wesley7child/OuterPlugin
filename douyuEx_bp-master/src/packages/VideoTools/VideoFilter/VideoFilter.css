@@ -1,0 +1,167 @@
+.filter__wrap {
+    display: none;
+    position: relative;
+    border-radius: 4px;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+.filter__panel {
+    position: absolute;
+    border: 1px solid #000;
+    border-radius: 4px;
+    transform: translateY(calc(-4px - 100%)) translateX(-50%);
+    left: 33%;
+    background-color: #000;
+    opacity: .75;
+    width: 300px;
+    padding-top: 10px;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.filter__panel li {
+    padding: 0 2px;
+    white-space: nowrap;
+    color: #fff;
+    text-align: center;
+    cursor: pointer;
+}
+
+.filter__panel li:hover {
+    background-color: rgb(85, 85, 85);
+}
+
+
+.filter__scroll {
+    width: 100%;
+    height: 5px;
+    background: #ccc;
+    position: relative;
+    display: inline-block;
+}
+
+.filter__scroll-bar {
+    width: 15px;
+    height: 15px;
+    background: #369;
+    position: absolute;
+    top: -5px;
+    left: 100px;
+    cursor: pointer;
+    border-radius: 100%;
+}
+
+.filter__scroll-mask {
+    position: absolute;
+    left: 0;
+    top: 0;
+    background: #369;
+    width: 100px;
+    height: 5px;
+}
+
+.filter__title {
+    color: white;
+    display: inline-block;
+    cursor: initial;
+    margin-right: 2px;
+}
+
+.filter__enhance {
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.filter__switch {
+    width: 40px;
+    height: 20px;
+    background: #ccc;
+    position: relative;
+    display: inline-block;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.filter__switch-slider {
+    width: 18px;
+    height: 18px;
+    background: #fff;
+    position: absolute;
+    top: 1px;
+    left: 0px;
+    border-radius: 50%;
+    transition: left 0.3s;
+}
+
+#filter__select {
+    width: 100%;
+    float: right;
+}
+
+.filter__filter {
+    margin-top: 5px;
+}
+
+/* 增强画质提示弹窗样式 */
+.enhance-modal__panel-wrap {
+    width: 100%;
+    height: 100%;
+    z-index: 1000;
+    background-color: rgba(0, 0, 0, 0.9);
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: none;
+    justify-content: center;
+    align-items: center;
+}
+.enhance-modal__panel {
+    height: 550px;
+    width: 600px;
+    background-color: white;
+    border-radius: 20px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: auto;
+    color: #333;
+}
+
+.enhance-modal__content {
+    position: relative;
+    top: 50%;
+    transform: translateY(-50%);
+    text-align: center;
+}
+
+.enhance-modal__text {
+    font-size: 18px;
+    margin-top: 20px;
+}
+
+.enhance-modal__img {
+    width: 720px;
+    margin-top: 20px;
+}
+
+.enhance-modal__close {
+    font-size: 30px;
+    font-weight: bold;
+    position: absolute;
+    right: 15px;
+    top: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.enhance-modal__close:hover {
+    color: #ff7700;
+}

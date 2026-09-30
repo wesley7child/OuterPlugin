@@ -1,0 +1,4 @@
+interface:
+  display_name: "VOIDIOV 功能文档"
+  short_description: "为 VOIDIOV 编写精炼完整的功能设计与实现文档"
+  default_prompt: "请按 VOIDIOV 文档规范分析当前功能，创建或更新精炼但完整的设计文档，并核对实现状态、影响范围和验收标准。"

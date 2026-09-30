@@ -1,0 +1,37 @@
+.gift__panel {
+    width: 100%;
+    display: none;
+    margin-top: 4px;
+}
+#gift__title {
+    cursor: pointer;
+    user-select: none;
+    color: royalblue;
+}
+#gift__select {
+    width: 113px;
+}
+
+.gift__option {
+    margin-top: 5px;
+}
+
+#gift__giftId {
+    width: 40px;
+}
+
+#gift__reply {
+    width: 150px;
+}
+
+#gift__export {
+    cursor: pointer;
+    color: royalblue;
+    margin-left: 10px;
+}
+
+#gift__import {
+    cursor: pointer;
+    color: royalblue;
+    margin-left: 5px;
+}

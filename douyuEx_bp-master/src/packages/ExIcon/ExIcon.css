@@ -1,0 +1,21 @@
+.ex-icon {
+	display: inline-block;
+	vertical-align: middle;
+	margin-right: 8px;
+
+	-moz-user-select:none; /*火狐*/
+    -webkit-user-select:none; /*webkit浏览器*/
+    -ms-user-select:none; /*IE10*/
+    -khtml-user-select:none; /*早期浏览器*/
+    user-select:none;
+}
+
+.ex-icon a {
+    display: flex;
+    justify-items: center;
+    align-items: center;
+}
+
+.ex-icon svg:hover {
+    transform: scale(1.1);
+}

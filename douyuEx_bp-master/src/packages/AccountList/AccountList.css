@@ -1,0 +1,92 @@
+#ex-accountList-wrap {
+    left: -152px;
+    top: -16px;
+    /* max-height: 330px;
+    overflow-y: scroll;
+    scrollbar-width: none;
+    -ms-overflow-style: none; */
+    -webkit-transition: all .2s cubic-bezier(.22,.58,.12,.98);
+    -o-transition: all cubic-bezier(.22,.58,.12,.98) .2s;
+    -moz-transition: all cubic-bezier(.22,.58,.12,.98) .2s;
+    transition: all .2s cubic-bezier(.22,.58,.12,.98);
+    -webkit-transform-origin: 80% 0;
+    -moz-transform-origin: 80% 0;
+    -ms-transform-origin: 80% 0;
+    -o-transform-origin: 80% 0;
+    transform-origin: 80% 0;
+    -webkit-animation: scale-in-ease .5s cubic-bezier(.22,.58,.12,.98);
+    -moz-animation: scale-in-ease cubic-bezier(.22,.58,.12,.98) .5s;
+    -o-animation: scale-in-ease cubic-bezier(.22,.58,.12,.98) .5s;
+    animation: scale-in-ease .5s cubic-bezier(.22,.58,.12,.98);
+}
+
+/* #ex-accountList-wrap::-webkit-scrollbar {
+    display: none;
+} */
+
+.ex-accountList-item {
+    padding: 10px;
+    display: flex;
+    border-radius: 10px;
+    align-items: center;
+}
+.ex-accountList-item:hover {
+    background-color: rgb(244,244,244);
+}
+
+#ex-accountList-iframe {
+    display: none;
+}
+#ex-accountList-iframe2 {
+    display: none;
+}
+
+#ex-accountList-item-add {
+    padding: 10px;
+    text-align: center;
+    margin-bottom:0px;
+    border-radius: 10px;
+}
+
+#ex-accountList-item-add:hover {
+    background-color: rgb(244,244,244);
+}
+
+.ex-accountList-item__imgWrap {
+    flex: 0 0 25%;
+}
+
+.ex-accountList-item__img {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+}
+
+.ex-accountList-item__name {
+    line-height: 50px;
+    flex: 0 0 55%;
+}
+
+.ex-accountList-item__btn {
+    height: 30px;
+    width: 50px;
+    border-radius: 10px;
+    align-items: center;
+    flex: auto;
+    text-align: center;
+    line-height: 28px;
+    color: white;
+    background-color: rgb(245,108,108);
+}
+
+.ex-accountList-item__btn:hover {
+    background-color: rgb(247,137,137);
+}
+
+#ex-accountList-icon:hover > #ex-accountList-wrap {
+    display: block;
+}
+
+#ex-accountList-content {
+    background-color: white;
+}

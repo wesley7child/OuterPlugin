@@ -1,0 +1,219 @@
+name: Sync Upstream and Build
+
+on:
+  schedule:
+    # 每天UTC时间00:00运行 (北京时间08:00)
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+  # 允许手动触发
+  push:
+    branches:
+      - master
+    paths:
+      - '.github/workflows/sync-upstream.yml'
+
+jobs:
+  sync-and-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up upstream remote
+        run: |
+          git remote add upstream https://github.com/qianjiachun/douyuEx.git || true
+          git fetch upstream
+          git fetch origin
+
+      - name: Check for upstream changes
+        id: check-changes
+        run: |
+          # 获取当前分支和上游master分支的最新commit
+          LOCAL_COMMIT=$(git rev-parse HEAD)
+          UPSTREAM_COMMIT=$(git rev-parse upstream/master)
+          
+          echo "local_commit=$LOCAL_COMMIT" >> $GITHUB_OUTPUT
+          echo "upstream_commit=$UPSTREAM_COMMIT" >> $GITHUB_OUTPUT
+          
+          if [ "$LOCAL_COMMIT" != "$UPSTREAM_COMMIT" ]; then
+            echo "changes_detected=true" >> $GITHUB_OUTPUT
+            echo "检测到上游更新"
+          else
+            echo "changes_detected=false" >> $GITHUB_OUTPUT
+            echo "没有检测到上游更新"
+          fi
+
+      - name: Sync upstream changes
+        if: steps.check-changes.outputs.changes_detected == 'true'
+        run: |
+          # 配置git用户信息
+          git config user.name "GitHub Action"
+          git config user.email "action@github.com"
+          
+          # 备份 build-output 和重要文件
+          echo "🔄 备份build-output目录和重要文件..."
+          if [ -d "build-output" ]; then
+            cp -r build-output build-output-backup
+          fi
+          if [ -d ".github" ]; then
+            cp -r .github .github-backup
+          fi
+          
+          # 合并上游更新，使用策略自动解决dist冲突
+          echo "🔄 合并上游更新，接受上游的dist目录..."
+          git merge upstream/master --no-edit --strategy-option theirs || {
+            echo "⚠️ 合并冲突，手动处理..."
+          
+            # 接受所有上游的dist文件
+            if [ -d "dist" ]; then
+              git checkout --theirs dist/
+              git add dist/
+            fi
+          
+            # 保留我们的build-output和.github
+            if [ -d "build-output-backup" ]; then
+              rm -rf build-output 2>/dev/null || true
+              mv build-output-backup build-output
+              git add build-output/
+            fi
+          
+            if [ -d ".github-backup" ]; then
+              rm -rf .github 2>/dev/null || true
+              mv .github-backup .github
+              git add .github/
+            fi
+          
+            # 继续合并
+            git -c core.editor=true merge --continue || true
+          }
+          
+          # 清理备份
+          rm -rf build-output-backup .github-backup 2>/dev/null || true
+          
+          echo "✅ 成功合并上游更新"
+
+      - name: Setup Node.js
+        if: steps.check-changes.outputs.changes_detected == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        if: steps.check-changes.outputs.changes_detected == 'true'
+        run: npm install
+
+      - name: Build project
+        if: steps.check-changes.outputs.changes_detected == 'true'
+        run: |
+          echo "🔨 开始构建Fork版本..."
+          npm run build
+          
+          # 检查构建是否成功
+          if [ -d "dist" ] && [ -f "dist/douyuex.js" ]; then
+            echo "✅ 构建成功"
+          
+            # 创建build-output目录并复制构建结果
+            rm -rf build-output
+            mkdir -p build-output
+            cp -r dist/* build-output/
+          
+            echo "✅ Fork构建结果已保存到build-output/"
+          
+            # 显示目录状态
+            echo ""
+            echo "📊 最终目录状态:"
+            echo "🔸 dist/ (上游原版 + 本次构建):"
+            ls -lh dist/
+            echo ""
+            echo "🔸 build-output/ (Fork构建版本副本):"
+            ls -lh build-output/
+          else
+            echo "❌ 构建失败"
+            exit 1
+          fi
+
+      - name: Commit and push changes
+        if: steps.check-changes.outputs.changes_detected == 'true'
+        run: |
+          # 还原 dist 目录的变化，保持为上游版本
+          # 我们已经将构建产物复制到了 build-output，所以这里恢复 dist
+          # 以避免与上游 dist 产生冲突
+          echo "🔄 还原 dist 目录到上游版本..."
+          git checkout HEAD dist/
+          # 如果构建产生了新的未追踪文件，也清理掉
+          git clean -fd dist/
+
+          # 添加所有更改
+          git add -A
+          
+          # 检查是否有更改需要提交
+          if git diff --staged --quiet; then
+            echo "没有构建产物变化需要提交"
+          else
+            # 提交更改
+            git commit -m "🤖 自动同步上游代码并构建 ($(date '+%Y-%m-%d %H:%M:%S'))" || true
+          fi
+
+          # 拉取最新的远程更改 (先提交后拉取，避免unstaged changes错误)
+          # 无论是否有新构建提交，都需要推送合并的上游更改
+          git pull --rebase origin master || {
+            echo "⚠️ 变基冲突，尝试解决..."
+            git rebase --abort
+            git pull --no-rebase origin master
+          }
+
+          # 推送到origin，如果失败则强制推送
+          git push origin master || {
+            echo "⚠️ 普通推送失败，尝试强制推送..."
+            git push --force-with-lease origin master
+          }
+        
+          echo "✅ 成功同步上游代码并提交构建结果"
+
+      - name: Create release info
+        if: steps.check-changes.outputs.changes_detected == 'true'
+        run: |
+          echo "## 🚀 自动构建完成" > release-info.md
+          echo "" >> release-info.md
+          echo "- **构建时间**: $(date '+%Y-%m-%d %H:%M:%S UTC')" >> release-info.md
+          echo "- **上游commit**: ${{ steps.check-changes.outputs.upstream_commit }}" >> release-info.md
+          echo "" >> release-info.md
+          echo "### 📦 目录说明" >> release-info.md
+          echo "- \`dist/\` - 最新构建文件（与上游同步后的构建结果）" >> release-info.md
+          echo "- \`build-output/\` - Fork版本构建副本（备份）" >> release-info.md
+          echo "" >> release-info.md
+          echo "### 📄 构建产物" >> release-info.md
+          if [ -d "build-output" ]; then
+            for file in build-output/*; do
+              if [ -f "$file" ]; then
+                filename=$(basename "$file")
+                filesize=$(du -h "$file" | cut -f1)
+                echo "- 📄 \`$filename\` ($filesize)" >> release-info.md
+              fi
+            done
+          fi
+
+      - name: Upload build artifacts
+        if: steps.check-changes.outputs.changes_detected == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-output-${{ github.run_number }}
+          path: build-output/
+          retention-days: 30
+
+      - name: Summary
+        run: |
+          if [ "${{ steps.check-changes.outputs.changes_detected }}" == "true" ]; then
+            echo "✅ 同步完成！上游代码已更新并成功构建" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            if [ -f "release-info.md" ]; then
+              cat release-info.md >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "ℹ️ 没有检测到上游更新，无需同步" >> $GITHUB_STEP_SUMMARY
+          fi

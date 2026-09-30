@@ -1,0 +1,181 @@
+name: Manual Sync and Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      force_sync:
+        description: '强制同步（即使没有检测到更改）'
+        required: false
+        default: 'false'
+        type: boolean
+      custom_dist_name:
+        description: '自定义构建目录名称'
+        required: false
+        default: 'build-output'
+        type: string
+
+jobs:
+  manual-sync:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Set up upstream remote
+      run: |
+        git remote add upstream https://github.com/qianjiachun/douyuEx.git || true
+        git fetch upstream
+
+    - name: Force sync or check changes
+      id: sync-decision
+      run: |
+        FORCE_SYNC="${{ github.event.inputs.force_sync }}"
+        
+        if [ "$FORCE_SYNC" == "true" ]; then
+          echo "should_sync=true" >> $GITHUB_OUTPUT
+          echo "🔄 强制同步模式已启用"
+        else
+          LOCAL_COMMIT=$(git rev-parse HEAD)
+          UPSTREAM_COMMIT=$(git rev-parse upstream/master)
+          
+          if [ "$LOCAL_COMMIT" != "$UPSTREAM_COMMIT" ]; then
+            echo "should_sync=true" >> $GITHUB_OUTPUT
+            echo "✅ 检测到上游更新"
+          else
+            echo "should_sync=false" >> $GITHUB_OUTPUT
+            echo "ℹ️ 没有检测到上游更新"
+          fi
+        fi
+
+    - name: Perform sync
+      if: steps.sync-decision.outputs.should_sync == 'true'
+      run: |
+        git config user.name "GitHub Action"
+        git config user.email "action@github.com"
+        
+        DIST_NAME="${{ github.event.inputs.custom_dist_name }}"
+        
+        # 备份重要文件
+        BACKUP_FILES=()
+        if [ -d "$DIST_NAME" ]; then
+          BACKUP_FILES+=("$DIST_NAME")
+        fi
+        if [ -d ".github" ]; then
+          BACKUP_FILES+=(".github")
+        fi
+        
+        for item in "${BACKUP_FILES[@]}"; do
+          if [ -e "$item" ]; then
+            echo "� 备份: $item"
+            cp -r "$item" "${item}-backup"
+          fi
+        done
+        
+        echo "�🔄 正在同步上游代码..."
+        if git merge upstream/master --no-edit; then
+          echo "✅ 成功合并上游更新"
+        else
+          echo "⚠️ 发现合并冲突，使用强制同步"
+          git reset --hard upstream/master
+          
+          # 恢复备份的文件
+          for item in "${BACKUP_FILES[@]}"; do
+            if [ -d "${item}-backup" ]; then
+              echo "🔄 恢复: $item"
+              rm -rf "$item" 2>/dev/null || true
+              mv "${item}-backup" "$item"
+            fi
+          done
+        fi
+
+    - name: Setup Node.js
+      if: steps.sync-decision.outputs.should_sync == 'true'
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+
+    - name: Install dependencies and build
+      if: steps.sync-decision.outputs.should_sync == 'true'
+      run: |
+        echo "📦 安装依赖..."
+        npm install
+        
+        DIST_NAME="${{ github.event.inputs.custom_dist_name }}"
+        
+        echo "📊 同步后的目录状态:"
+        if [ -d "dist" ]; then
+          echo "� 发现上游dist目录，将进行保护"
+          ls -la dist/ | head -3
+          cp -r dist dist-upstream-backup
+          UPSTREAM_DIST_EXISTS=true
+        else
+          echo "🔸 上游没有dist目录"
+          UPSTREAM_DIST_EXISTS=false
+        fi
+        
+        echo "🔨 开始构建Fork版本..."
+        npm run build
+        
+        # 检查构建结果
+        if [ -d "dist" ] && [ -f "dist/douyuex.js" ]; then
+          echo "✅ Fork版本构建成功"
+          
+          # 复制构建结果到自定义目录
+          cp -r dist "$DIST_NAME"
+          echo "✅ 构建结果已保存到: $DIST_NAME/"
+          ls -la "$DIST_NAME"/
+          
+          # 恢复上游dist目录
+          if [ "$UPSTREAM_DIST_EXISTS" == "true" ]; then
+            echo "🔄 恢复上游原始dist目录..."
+            rm -rf dist
+            mv dist-upstream-backup dist
+            echo "✅ 上游dist目录已恢复"
+          else
+            echo "ℹ️ 上游没有dist目录，保留构建的dist目录"
+          fi
+          
+        else
+          echo "❌ 构建失败"
+          # 恢复上游dist（如果存在）
+          if [ "$UPSTREAM_DIST_EXISTS" == "true" ]; then
+            rm -rf dist 2>/dev/null || true
+            mv dist-upstream-backup dist
+          fi
+          exit 1
+        fi
+        
+        echo "📊 最终目录状态:"
+        echo "🔸 dist/ (上游版本):"
+        if [ -d "dist" ]; then
+          ls -la dist/ | head -3
+        else
+          echo "  不存在"
+        fi
+        echo "🔸 $DIST_NAME/ (Fork版本):"
+        ls -la "$DIST_NAME"/ | head -3
+
+    - name: Commit and push
+      if: steps.sync-decision.outputs.should_sync == 'true'
+      run: |
+        git add -A
+        
+        if git diff --staged --quiet; then
+          echo "ℹ️ 没有需要提交的更改"
+        else
+          git commit -m "🔧 手动同步上游并构建 - $(date '+%Y-%m-%d %H:%M:%S')"
+          git push origin master
+          echo "✅ 更改已提交并推送"
+        fi
+
+    - name: Upload artifacts
+      if: steps.sync-decision.outputs.should_sync == 'true'
+      uses: actions/upload-artifact@v4
+      with:
+        name: manual-build-${{ github.run_number }}
+        path: ${{ github.event.inputs.custom_dist_name }}/
+        retention-days: 30

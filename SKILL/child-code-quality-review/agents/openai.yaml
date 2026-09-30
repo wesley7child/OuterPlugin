@@ -1,0 +1,4 @@
+interface:
+  display_name: "Child Code Quality Review"
+  short_description: "Strict code quality review gate"
+  default_prompt: "Use $child-code-quality-review to review the latest code changes for architecture, maintainability, safety, and test risk."

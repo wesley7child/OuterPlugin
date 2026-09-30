@@ -1,0 +1,46 @@
+.enter__panel {
+    width: 100%;
+    display: none;
+    margin-top: 4px;
+}
+#enter__title {
+    cursor: pointer;
+    user-select: none;
+    color: royalblue;
+}
+#enter__select {
+    width: 190px;
+}
+
+.enter__option {
+    margin-top: 5px;
+}
+
+#enter__enterId {
+    width: 40px;
+}
+
+#enter__reply {
+    width: 150px;
+}
+
+#enter__word {
+    width: 140px;
+}
+
+#enter__level {
+    width: 25px;
+    text-align: center;
+}
+
+#enter__export {
+    cursor: pointer;
+    color: royalblue;
+    margin-left: 10px;
+}
+
+#enter__import {
+    cursor: pointer;
+    color: royalblue;
+    margin-left: 5px;
+}

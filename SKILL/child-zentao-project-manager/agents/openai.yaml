@@ -1,0 +1,4 @@
+interface:
+  display_name: "Child ZenTao Project Manager"
+  short_description: "Manage ZenTao stories, linked tasks, worker execution, completion notes, and task status."
+  default_prompt: "Use $child-zentao-project-manager to read a ZenTao story by ID, execute selected or all linked tasks with workers when useful, create or update stories and tasks, or complete a task with a factual implementation summary."

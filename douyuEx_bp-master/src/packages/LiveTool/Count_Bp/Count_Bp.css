@@ -1,0 +1,24 @@
+/* 自动抢红包面板样式 */
+.count_bp__panel {
+    width: 100%;
+    display: none; /* 默认隐藏 */
+    margin-top: 4px;
+}
+
+/* 标题样式 */
+#count_bp__title {
+    cursor: pointer;
+    user-select: none;
+    color: royalblue;
+}
+
+/* 输入框样式 */
+#count_bp__add_input,
+#count_bp__original_input {
+    width: 35px;
+}
+
+/* 选项间距 */
+.redpacket__option {
+    margin-top: 5px;
+}
