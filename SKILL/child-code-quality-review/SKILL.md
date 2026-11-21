@@ -1,103 +1,125 @@
 ---
 name: child-code-quality-review
-description: Review newly written or modified code for enterprise-grade quality. Use when Codex needs to inspect code changes, pull requests, patches, refactors, feature implementations, bug fixes, or generated code for architecture fit, clean object-oriented design, class responsibility boundaries, method decomposition, maintainability, duplication, readability, safety, performance, testing, and whether the code is becoming messy or hard to maintain.
+description: Review code changes, pull requests, feature implementations, bug fixes, and refactors from four company roles (CEO, product manager, product architect, and chief developer). Assess business and product fit, functional completeness, architecture, code aesthetics, sustainability, security, and delivery evidence. Use for code quality reviews and quality gates; review alone does not authorize implementation changes or release.
 ---
 
 # Child Code Quality Review
 
-## Core Purpose
+## 目标与边界
 
-Use this skill as a strict code quality gate after new code is written and before it is considered done. Focus on whether the implementation is clean, maintainable, correctly separated by responsibility, aligned with existing project architecture, and free of obvious "messy code" patterns.
+以【公司CEO】【产品经理】【产品架构师】【开发部首席开发员】四个职位审查同一份代码，判断它是否解决正确的问题、形成完整功能、具备合理结构，并能够持续维护和交付。
 
-## Review Workflow
+四个职位是审查视角，不代表四位真实人员批准，也不要求创建四个子代理。默认由当前审查者完成四个视角的分析；用户明确要求多人或并行审查时再按授权执行。
 
-1. Read the project rules first. Prefer `AGENT.md`, then `AGENTS.md`, then any repository-specific contributing or style document that is clearly relevant.
-2. Inspect the changed files and nearby existing code before judging. Use fast search tools such as `rg`, existing code graph tools, or project-native navigation to find related classes, helpers, patterns, tests, and configuration.
-3. Identify the behavioral intent of the change from the user request, diff, commit, issue, branch name, or surrounding code. Do not assume the implementation is correct just because it compiles.
-4. Review from architecture level down to method level: module boundaries, class responsibilities, method decomposition, duplication, data flow, edge cases, security, performance, and tests.
-5. Run the most relevant lightweight validation when possible, such as compile, lint, unit tests, targeted integration tests, or project-specific checks. If validation cannot run, state the reason and residual risk.
-6. Report findings first, ordered by severity. Prefer concrete file and line references over general advice.
+仅请求审查时提供结论和建议；用户同时要求修复时才修改代码。作为开发任务的质量关口时，可以在原授权范围内修正已确认的问题。审查通过不代表已经发布或授权发布。
 
-## Architecture And Responsibility Checks
+## 四个职位与三条分析主线
 
-- Check whether each class has one clear responsibility and whether new methods belong in that class.
-- Flag business logic that leaks into controllers, UI components, DTOs, persistence classes, configuration classes, or utility classes without a strong existing pattern.
-- Flag data access, remote calls, file IO, configuration parsing, validation, formatting, and orchestration when they are mixed into one class or method without a clean boundary.
-- Check whether existing service, repository, factory, mapper, validator, handler, strategy, or helper abstractions should be reused instead of adding a parallel implementation.
-- Check whether new code follows the repository's dependency direction and module ownership. Flag circular dependencies, cross-layer shortcuts, and direct calls that bypass established abstractions.
-- Treat a "god class", "god method", or all-purpose helper as a serious maintainability issue, especially when the change adds more unrelated behavior to it.
+三条主线组织分析，四个职位分别承担不同责任，不能省略任何一个职位，也不能把同一个问题重复算成四个问题。
 
-## Object-Oriented Design Checks
+| 分析主线 | 主要职位 | 需要回答的问题 |
+| --- | --- | --- |
+| 业务与产品 | 公司CEO、产品经理 | 为什么做、是否值得、功能是否完整、用户是否能完成目标？ |
+| 架构与演进 | 产品架构师 | 模块和数据如何协作、结构是否科学、后续变化是否可持续？ |
+| 实现与交付 | 开发部首席开发员 | 代码是否正确清晰、安全高效、可以验证并可靠交付？ |
 
-- Verify names are descriptive, singular for custom class, file, method, and variable names when the project convention requires it, and consistent with existing domain language.
-- Check encapsulation: mutable state, internal collections, domain invariants, and lifecycle details should not be exposed unless the existing API contract requires it.
-- Prefer composition, small collaborators, and project-native extension points over deep inheritance or duplicated condition trees.
-- Flag static utility growth when the behavior belongs to a domain object, service, strategy, mapper, or framework feature.
-- Flag abstractions that do not reduce complexity, do not match a stable variation point, or hide simple logic behind unnecessary layers.
+### 【公司CEO】：价值、成本与经营风险
 
-## Method Quality Checks
+- 对照用户目标、工单或已确认的业务规则，判断改动解决了什么问题，是否偏离范围、重复建设或引入不必要的复杂度。
+- 从代码、依赖、配置和运行路径评估维护成本、服务成本、故障影响、关键外部依赖和可持续投入；区分必要投入与过度设计。
+- 关注会影响业务连续性、资金或数据安全、客户信任的风险，以及已知容量和交付约束下的可行性。
+- 业务价值、收益、预算、合规要求和公司战略必须有来源；不得根据代码虚构商业回报或把个人产品偏好当成公司决策。资料不足时标记待确认，不擅自否定需求。
 
-- Check whether each method performs one coherent task and can be understood without mentally executing many unrelated phases.
-- Flag long methods, deeply nested branches, repeated condition blocks, mixed validation and side effects, and unclear variable lifetimes.
-- Check whether repeated logic should be extracted into a shared method, existing helper, validator, mapper, or configuration constant.
-- Flag too many parameters, ambiguous booleans, mutable output parameters, hidden global state, and unclear return semantics.
-- Check whether error handling is local and meaningful: exceptions, fallback values, retries, logs, and user-facing messages should match the failure mode.
-- Respect existing comments. Do not recommend deleting comments unless they are demonstrably wrong or harmful; prefer updating or adding clarifying comments.
+### 【产品经理】：需求、功能闭环与体验
 
-## Configuration, Constants, And Hardcoding
+- 将明确需求映射到入口、输入与权限、处理规则、数据结果、用户反馈和验收证据；检查前端入口、后端能力、持久化和展示是否一致，按实际功能选择环节。
+- 覆盖适用的正常、空数据、非法输入、无权限、重复操作、加载、取消、超时、失败与恢复场景；发现已有能力但缺少可达入口、只展示成功却未保存结果等不完整实现。
+- 检查业务术语、默认值、筛选排序、金额与时间语义、状态流转、错误提示和可访问性是否符合现有产品约定。
+- 区分已承诺但遗漏的功能、真实使用障碍和可选增强；不能把未提出的新功能列为缺陷。需求不明时只询问影响验收的关键点，并继续审查不依赖答案的部分。
 
-- Flag service addresses, timeouts, retry counts, feature switches, credentials, file paths, business thresholds, and environment-dependent values when they are hardcoded in business code.
-- Verify stable API paths and repeated string constants are centralized in the repository's existing path, route, constant, or configuration structure.
-- Check whether magic numbers and magic strings are either named constants or intentionally local and obvious.
-- Review whether configuration defaults, validation, and failure behavior are documented or enforced by existing configuration mechanisms.
+### 【产品架构师】：职责、依赖与演进
 
-## Correctness, Edge Case, And Data Checks
+- 沿真实调用与数据流检查模块边界、依赖方向、领域不变量和类职责，识别循环依赖、跨层捷径、业务逻辑泄漏和职责无限增长的类。
+- 查看已有 service、repository、mapper、validator、handler、strategy 或框架扩展点是否可复用；同时检查新抽象是否对应真实变化点，避免万能工具类和无收益的分层。
+- 检查 API、事件、模型、数据库与配置契约是否同步，事务、并发、幂等、缓存和资源生命周期是否保护数据一致性。
+- 针对已知变化、现有规模和当前约束评价可扩展性、可测试性、可观测性与迁移成本；建议能解决问题的最小结构调整，不因功能简单就要求微服务、设计模式或框架重写。
+- 当用户要求新实现完全替代旧实现时，检查调用方是否全部迁移、有无双路径与僵尸代码。删除建议必须先核实引用、动态注册、外部契约和使用证据，不能仅凭未搜到调用就认定废弃。
 
-- Look beyond the happy path. Check null values, empty collections, duplicate input, invalid format, missing permissions, partial failure, timeout, retry, pagination, concurrency, and idempotency where relevant.
-- Verify transaction boundaries, ordering guarantees, cache invalidation, and consistency with persistent data.
-- Check whether input validation occurs at the correct boundary and whether internal methods still protect important invariants.
-- Flag silent failure, swallowed exceptions, misleading success responses, and logs that make production diagnosis difficult.
+### 【开发部首席开发员】：正确性、代码美感与交付质量
 
-## Security And Performance Checks
+- 审查方法是否完成单一连贯任务，命名、控制流、参数、状态和错误处理是否易于理解；关注深层嵌套、重复分支、隐式副作用、含义模糊的布尔参数和无效抽象。
+- 代码美感以清晰表达业务、局部一致、低认知负担和容易修改为依据；不要以个人偏好、行数或抽象数量代替质量判断。面向对象项目检查封装与组合，其他范式遵循项目原有设计。
+- 遵守实际项目的 import、单数命名、方法体格式、注释和工单标识规则；保留已有注释，优先补充解释。发现注释与实现冲突时指出矛盾，不擅自删除或改写已有注释。
+- 检查易变参数是否进入集中配置，稳定 API 路径是否进入既有 path 常量；验证默认值、校验和缺失配置的失败行为，避免业务代码散落地址、超时、重试或敏感信息。
+- 核实空值、边界、精度、顺序、分页、重试和异常传播；检查授权绕过、注入、敏感日志、不安全文件访问或反序列化，以及重复查询、循环远程调用、无界内存和异步阻塞。
+- 复用项目与框架已有实现；优化性能必须保留安全和业务语义，明确任何真实取舍。测试应证明行为与关键风险，避免仅镜像实现或为低影响格式改动增加无意义测试。
 
-- Check for injection risk, authorization bypass, insecure direct object references, sensitive data in logs, unsafe file access, insecure deserialization, and leaking tokens or secrets.
-- Check for repeated database queries, remote calls inside loops, unbounded memory growth, full scans, unnecessary synchronization, blocking calls in async paths, and avoidable repeated parsing.
-- Prefer efficient project-native APIs, batching, pagination, streaming, indexes, caching, and short-circuiting when they match the use case.
-- If performance and security trade off, never silently accept the tradeoff. State the risk and recommend the safer design unless the project explicitly chooses otherwise.
+## 执行流程
 
-## Test And Verification Checks
+1. **先读取规则和确定范围。** 读取项目 `AGENT.md`，不存在时检查 `AGENTS.md` 及适用父目录规则，再读取相关贡献与风格规范。核实仓库根目录、工作区已有改动和目标 diff；用户未指定范围时先确认实际变更，不把无关历史问题混入本次结论。
+2. **建立证据。** 阅读变更文件、调用方、被调用实现、配置、测试和相关需求说明，用 `rg` 等追踪真实行为。diff 是入口，不能只看 diff 判断功能完整性；按影响范围扩展检查，共享契约或核心数据变化需要覆盖相关模块。
+3. **还原需求与功能链路。** 记录明确需求、对应实现和验证证据。复杂改动可使用需求覆盖表，标记已实现、缺失、待确认或未验证；源码能证明实现存在，不能自动证明端到端验收通过。
+4. **分别完成四个职位的审查。** 每个职位给出简短判断及证据或验证缺口，再交叉检查冲突。高层价值判断不能覆盖底层安全缺陷，技术优雅也不能弥补功能缺失。
+5. **合并与核实问题。** 相同根因只报告一次，注明主要职位和相关职位；给出触发条件、实际行为、预期依据、影响及最小修复建议。明显不成立的问题应剔除，证据不足的猜测放入待确认项。
+6. **按风险验证。** 优先执行相关编译、lint、针对性单元或集成测试。共享能力、核心业务、权限、持久化与跨模块契约需有相应行为证据；仅新增注释或格式调整可用差异检查。记录实际命令和结果，失败时区分本次变更、已有问题及环境限制。不得为验证擅自操作生产数据或外部系统。
+7. **输出可执行结论。** 按下述格式报告。若按原任务授权修复了问题，应再次验证受影响行为，再输出修复后的状态与剩余问题；不得仅因建议已提出就判定通过。验证用临时文件结束后逐个清理明确路径，不遗留到仓库。
 
-- Verify whether tests cover main behavior, boundary behavior, failure behavior, and regression-prone interactions.
-- Flag missing tests when the change touches shared utilities, core business flows, cross-module contracts, security-sensitive code, or data persistence.
-- Prefer targeted tests that prove the changed behavior over broad snapshot or superficial compile-only checks.
-- Report the exact validation command run and whether it passed. If no command was run, explain why.
+## 证据与质量判定
 
-## Severity Guide
+| 质量维度 | 判定依据 |
+| --- | --- |
+| 合理性 | 实现与明确目标一致，投入与复杂度符合当前约束，无重复建设或越界扩展。 |
+| 功能完整性 | 明确需求与适用的成功、失败、恢复路径形成闭环，相关入口和契约一致。 |
+| 代码美感 | 语义清晰、职责连贯、重复少、状态与控制流易读，并符合项目规则。 |
+| 架构科学性 | 分层、依赖、抽象和数据边界有实际依据，能够保护关键业务不变量。 |
+| 可持续性 | 已知变化可局部实现，成本可解释，配置、测试、诊断和迁移路径可维护。 |
+| 安全与交付 | 权限、数据与资源受保护，性能风险有依据，验证证据支持所声称的结果。 |
 
-- `P0`: Broken build, data loss, security vulnerability, severe production crash, or change cannot safely ship.
-- `P1`: Serious correctness, architecture, responsibility, or maintainability issue likely to cause bugs or expensive future work.
-- `P2`: Moderate issue such as duplication, unclear method split, missing edge case, missing targeted test, or local design smell.
-- `P3`: Minor readability, naming, comment, formatting, or small consistency issue.
+- 每个正式问题都必须有可定位证据；优先使用核实过的当前文件行号，并追踪被调用方法。不能用“可能不够优雅”等无法验证的评价制造问题。
+- 区分确认缺陷、验证缺口与可选建议。验证缺口只有在造成具体且重要的交付风险时才列为正式问题，不能把未执行测试写成测试失败。
+- 不强制打分；用户要求评分时解释依据和未验证项，不能用平均分抵消严重缺陷，也不能编造覆盖率、收益或性能数字。
+- 保留用户已有授权与范围，不因某个职位的结论擅自增加需求、修改无关代码、删除文件、提交、推送或发布。
 
-## Required Output
+## 严重级别与通过条件
 
-Start with findings, not a long summary. If there are no findings, say clearly that no blocking quality issues were found and mention any remaining test or validation gap.
+- `P0`：已确认且影响广泛或灾难性的风险，如重大数据损失、关键安全突破或核心服务全面不可用，需要立即阻止交付。
+- `P1`：已确认的重要功能错误、变更导致的构建失败、严重安全或一致性问题；或有明确调用与变更证据的结构问题，会阻断交付或显著增加故障及维护成本。
+- `P2`：局部功能或边界缺陷、重复实现、职责混杂、必要验证缺失等，有具体影响且值得修正，但不达到 P1。
+- `P3`：局部命名、注释、格式或一致性问题；依据项目规则提出，不能以个人风格升级为阻塞问题。
 
-Use this structure:
+严重性由影响、触发范围和证据确定，不由职位高低决定。需求与安全缺陷优先于主观美感，长期结构调整应结合当前交付约束提出。
+
+结论为：**高风险不建议合入**（存在 P0/P1）；**需修改**（存在影响需求验收、数据安全或必要验证的 P2，或明确必须遵守的项目规则尚未满足）；**通过**（当前范围未发现阻塞问题，明确保留未验证边界及非阻塞建议）。关键证据缺失且足以影响结论时，注明“结论待验证”，不能伪装成已确认缺陷或充分通过。
+
+## 输出要求
+
+中文回答，结论一句话后立即列出按严重性排序的问题，再展示四个职位的短评和验证。避免四篇重复长文；每个职位一行，缺少依据时明确标记“待确认”或“未验证”。
 
 ```markdown
-**结论**
-通过 / 需修改 / 高风险不建议合入
+**结论**：通过 / 需修改 / 高风险不建议合入；必要时注明结论待验证。
 
 **问题**
-- [P1] 文件路径:行号 - 问题标题
-  说明问题为什么成立、会造成什么风险、建议如何修改。
+
+- [P1][产品经理；相关：开发部首席开发员] 问题标题 — 文件路径:行号
+  触发条件与实际行为；预期依据；具体影响；最小修改建议。
+
+**四职位判断**
+
+| 职位 | 判断与关键依据 / 验证缺口 |
+| --- | --- |
+| 公司CEO | 目标契合度、投入与经营风险。 |
+| 产品经理 | 需求覆盖、功能闭环与用户体验。 |
+| 产品架构师 | 职责与契约、架构合理性及持续演进。 |
+| 开发部首席开发员 | 正确性、代码美感、安全性能与交付质量。 |
 
 **验证**
-已运行或无法运行的验证命令，以及结果。
 
-**补充**
-仅放必要的开放问题、假设或低风险建议。
+实际执行的命令、结果和适用范围；无法执行时给出具体原因。
+区分静态检查、编译、测试、端到端验收和部署状态。
+
+**待确认 / 非阻塞建议**
+
+仅列影响判断的未知信息或有具体价值的可选建议；无内容时省略。
 ```
 
-Keep the response concise. Do not rewrite large code blocks unless the user asks for an implementation fix. When recommending a refactor, name the target class, method, or abstraction and explain the smallest useful change.
+没有问题时直接写“当前范围未发现阻塞问题”，仍提供四职位判断和验证边界。需要修复时定位具体类、方法或现有抽象，不在仅审查请求中重写大段代码。

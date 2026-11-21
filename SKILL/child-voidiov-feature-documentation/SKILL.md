@@ -1,5 +1,5 @@
 ---
-name: voidiov-feature-documentation
+name: child-voidiov-feature-documentation
 description: 为 VOIDIOV 任一业务项目或跨项目功能建立、补充和审查可操作的 Markdown 文档；按当前规则、源码、配置、数据、权限和验证证据还原真实行为，避免重复和过度承诺。
 ---
 

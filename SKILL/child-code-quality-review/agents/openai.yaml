@@ -1,4 +1,4 @@
 interface:
-  display_name: "Child Code Quality Review"
-  short_description: "Strict code quality review gate"
-  default_prompt: "Use $child-code-quality-review to review the latest code changes for architecture, maintainability, safety, and test risk."
+  display_name: "四职位代码质量审查"
+  short_description: "从CEO、产品经理、产品架构师和首席开发员视角审查功能、架构及代码质量"
+  default_prompt: "使用 $child-code-quality-review 从公司CEO、产品经理、产品架构师、开发部首席开发员四个视角审查当前代码改动，给出有证据的问题、功能完整性与架构判断，以及验证结果。"
